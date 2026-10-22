@@ -1,0 +1,1014 @@
+<title>Agenda Fisio</title>
+<style>
+:root {
+  --bg: #ffffff; --bg2: #f6f8fb; --fg: #1f2328; --muted: #5f6b7a; --line: #e3e7ee;
+  --accent: #1a73e8; --accent-fg: #fff; --danger: #d93025; --ok: #188038; --warn: #b06000;
+  --card: #ffffff; --hover: #eef3fd; --today: #1a73e8; --shadow: 0 4px 24px rgba(0,0,0,.12); --scrim: rgba(0,0,0,.4); --ev-fg: #ffffff;
+  --h: 48px; --radius: 10px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15181d; --bg2: #1c2027; --fg: #e8eaed; --muted: #9aa3ae; --line: #2c323b;
+    --accent: #8ab4f8; --accent-fg: #0b1a33; --danger: #f28b82; --ok: #81c995; --warn: #fdd663;
+    --card: #1f242c; --hover: #263042; --today: #8ab4f8; --shadow: 0 4px 24px rgba(0,0,0,.5); --scrim: rgba(0,0,0,.6);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15181d; --bg2: #1c2027; --fg: #e8eaed; --muted: #9aa3ae; --line: #2c323b;
+  --accent: #8ab4f8; --accent-fg: #0b1a33; --danger: #f28b82; --ok: #81c995; --warn: #fdd663;
+  --card: #1f242c; --hover: #263042; --today: #8ab4f8; --shadow: 0 4px 24px rgba(0,0,0,.5); --scrim: rgba(0,0,0,.6);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body { background: var(--bg); color: var(--fg); font: 14px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+.hidden { display: none !important; }
+
+.btn { border: 1px solid var(--line); background: var(--card); padding: 7px 14px; border-radius: 999px; white-space: nowrap; }
+.btn:hover { background: var(--hover); }
+.btn.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); font-weight: 600; }
+.btn.danger { color: var(--danger); }
+.btn.danger-bg { background: var(--danger); border-color: var(--danger); color: var(--bg); }
+.btn.icon { padding: 6px 10px; }
+.btn.small { padding: 4px 10px; font-size: 13px; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; }
+.seg button { border: 0; background: transparent; padding: 7px 14px; }
+.seg button.on { background: var(--hover); color: var(--accent); font-weight: 600; }
+input, select, textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); }
+textarea { min-height: 64px; resize: vertical; }
+label { display: block; font-size: 12px; color: var(--muted); margin: 10px 0 4px; }
+.row { display: flex; gap: 10px; }
+.row > * { flex: 1; min-width: 0; }
+
+/* Pantalla de bloqueo */
+#lock { min-height: 100%; display: grid; place-items: center; padding: 16px; background: var(--bg2); }
+.lock-card { width: 100%; max-width: 420px; background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 28px; box-shadow: var(--shadow); }
+.lock-card h1 { margin: 0 0 4px; font-size: 22px; }
+.lock-card p { color: var(--muted); margin: 6px 0; }
+.lock-card .btn { width: 100%; margin-top: 14px; padding: 10px; }
+.lock-card .links { margin-top: 16px; display: flex; flex-direction: column; gap: 6px; }
+.linkbtn { background: none; border: 0; color: var(--accent); padding: 0; text-align: left; }
+.err { color: var(--danger); font-size: 13px; min-height: 18px; margin-top: 8px; }
+.shield { font-size: 13px; background: var(--bg2); border-radius: 8px; padding: 10px 12px; margin-top: 14px; color: var(--muted); }
+
+/* App */
+#app { height: 100%; display: flex; flex-direction: column; }
+#lock { padding-left: max(16px, env(safe-area-inset-left, 0px)) !important; padding-right: max(16px, env(safe-area-inset-right, 0px)) !important; }
+.loading { color: var(--muted); text-align: center; }
+header.top { display: flex; align-items: center; gap: 12px; padding: 8px 16px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.brand { font-weight: 700; font-size: 18px; margin-right: 8px; }
+.tabs { display: flex; gap: 4px; }
+.tabs button { border: 0; background: none; padding: 8px 14px; border-radius: 999px; }
+.tabs button.on { background: var(--hover); color: var(--accent); font-weight: 600; }
+.spacer { flex: 1; }
+#status { font-size: 12px; color: var(--muted); border: 0; background: none; }
+#status.warn { color: var(--warn); font-weight: 600; }
+main { flex: 1; min-height: 0; display: flex; }
+
+/* Calendario */
+.cal-wrap { flex: 1; display: flex; min-width: 0; }
+.cal-side { width: 240px; border-right: 1px solid var(--line); padding: 14px; overflow: auto; }
+.cal-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.cal-bar { display: flex; align-items: center; gap: 8px; padding: 10px 16px; flex-wrap: wrap; }
+.cal-title { font-size: 20px; font-weight: 500; margin: 0 8px; }
+.mini { width: 100%; border-collapse: collapse; text-align: center; font-size: 12px; }
+.mini th { color: var(--muted); font-weight: 500; padding: 3px 0; }
+.mini td button { width: 28px; height: 28px; border-radius: 50%; border: 0; background: none; font-size: 12px; }
+.mini td button:hover { background: var(--hover); }
+.mini td button.out { color: var(--muted); opacity: .6; }
+.mini td button.today { background: var(--today); color: var(--accent-fg); }
+.mini td button.sel:not(.today) { background: var(--hover); color: var(--accent); font-weight: 700; }
+.mini-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; font-weight: 600; }
+.side-h { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 18px 0 6px; }
+.agenda-item { display: flex; gap: 8px; padding: 6px; border-radius: 8px; border: 0; background: none; width: 100%; text-align: left; }
+.agenda-item:hover { background: var(--hover); }
+.dot { width: 10px; height: 10px; border-radius: 50%; flex: none; margin-top: 4px; }
+.legend div { display: flex; gap: 8px; align-items: center; font-size: 13px; margin: 4px 0; }
+
+.grid { flex: 1; min-height: 0; display: flex; flex-direction: column; border-top: 1px solid var(--line); }
+.grid-head { display: grid; grid-template-columns: 56px repeat(var(--cols), 1fr); border-bottom: 1px solid var(--line); padding-right: var(--sbw, 0px); }
+.dayhead { border: 0; background: none; padding: 8px 0; display: flex; flex-direction: column; align-items: center; gap: 2px; color: var(--muted); font-size: 11px; text-transform: uppercase; }
+.dayhead span { font-size: 22px; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; color: var(--fg); }
+.dayhead:hover span { background: var(--hover); }
+.dayhead.today { color: var(--today); }
+.dayhead.today span { background: var(--today); color: var(--accent-fg); }
+.grid-body { flex: 1; overflow-y: auto; display: grid; grid-template-columns: 56px repeat(var(--cols), 1fr); position: relative; }
+.gutter { position: relative; }
+.gutter div { height: var(--h); font-size: 10px; color: var(--muted); text-align: right; padding-right: 8px; transform: translateY(-6px); }
+.col { position: relative; border-left: 1px solid var(--line); background-image: repeating-linear-gradient(to bottom, var(--line) 0 1px, transparent 1px var(--h)); cursor: cell; }
+.col.weekend { background-color: var(--bg2); }
+.ev { position: absolute; left: 2px; right: 2px; border-radius: 6px; padding: 2px 6px; font-size: 12px; overflow: hidden; color: var(--ev-fg); border: 1px solid var(--bg); cursor: pointer; text-align: left; line-height: 1.25; }
+.ev b { font-weight: 600; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ev small { opacity: .9; }
+.ev.cancelada { opacity: .45; text-decoration: line-through; }
+.ev.noasistio { outline: 2px dashed var(--danger); outline-offset: -2px; }
+.ev.realizada::after { content: "✓"; position: absolute; right: 5px; top: 2px; font-weight: 700; }
+.now { position: absolute; left: 0; right: 0; height: 2px; background: var(--danger); z-index: 3; pointer-events: none; }
+.now::before { content: ""; position: absolute; left: -6px; top: -5px; width: 12px; height: 12px; border-radius: 50%; background: var(--danger); }
+
+.month { flex: 1; display: grid; grid-template-columns: repeat(7, 1fr); grid-template-rows: auto repeat(6, 1fr); border-top: 1px solid var(--line); min-height: 0; }
+.month .wd { text-align: center; font-size: 11px; color: var(--muted); padding: 6px 0; text-transform: uppercase; border-left: 1px solid var(--line); }
+.mcell { border-left: 1px solid var(--line); border-top: 1px solid var(--line); padding: 4px; overflow: hidden; min-height: 80px; cursor: cell; }
+.mcell.out { background: var(--bg2); }
+.mcell .num { border: 0; background: none; width: 26px; height: 26px; border-radius: 50%; font-size: 12px; display: block; margin: 0 auto 2px; }
+.mcell .num:hover { background: var(--hover); }
+.mcell.today .num { background: var(--today); color: var(--accent-fg); }
+.chip { display: block; width: 100%; text-align: left; border: 0; border-radius: 4px; padding: 1px 6px; margin-bottom: 2px; font-size: 12px; color: var(--ev-fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.more { border: 0; background: none; font-size: 12px; color: var(--muted); padding: 0 6px; }
+
+/* Pacientes */
+.crm { flex: 1; display: flex; min-width: 0; }
+.plist { width: 320px; border-right: 1px solid var(--line); display: flex; flex-direction: column; }
+.plist-top { padding: 12px; display: flex; gap: 8px; border-bottom: 1px solid var(--line); }
+.plist-items { overflow: auto; flex: 1; }
+.pitem { display: block; width: 100%; text-align: left; border: 0; border-bottom: 1px solid var(--line); background: none; padding: 10px 14px; }
+.pitem:hover { background: var(--hover); }
+.pitem.on { background: var(--hover); box-shadow: inset 3px 0 0 var(--accent); }
+.pitem small { color: var(--muted); display: block; }
+.pdetail { flex: 1; overflow: auto; padding: 20px 24px; min-width: 0; }
+.pd-head { display: flex; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+.pd-head h2 { margin: 0; font-size: 24px; }
+.pd-meta { color: var(--muted); margin-top: 4px; display: flex; gap: 14px; flex-wrap: wrap; }
+.pd-meta a { color: var(--accent); text-decoration: none; }
+.actions { display: flex; gap: 6px; flex-wrap: wrap; margin-left: auto; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin-top: 18px; }
+.card { border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; background: var(--card); }
+.card h4 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+.card p { margin: 0; white-space: pre-wrap; }
+.sec-h { display: flex; align-items: center; gap: 10px; margin: 26px 0 10px; }
+.sec-h h3 { margin: 0; font-size: 16px; }
+.timeline { border-left: 2px solid var(--line); margin-left: 6px; padding-left: 16px; }
+.entry { position: relative; border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 12px; background: var(--card); }
+.entry::before { content: ""; position: absolute; left: -23px; top: 16px; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); border: 2px solid var(--bg); }
+.entry-h { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.entry-h strong { font-size: 15px; }
+.eva { font-size: 12px; padding: 2px 8px; border-radius: 999px; background: var(--bg2); }
+.entry dl { margin: 8px 0 0; display: grid; grid-template-columns: 130px 1fr; gap: 4px 12px; }
+.entry dt { color: var(--muted); font-size: 13px; }
+.entry dd { margin: 0; white-space: pre-wrap; }
+.appts { width: 100%; border-collapse: collapse; }
+.appts td { padding: 7px 6px; border-bottom: 1px solid var(--line); }
+.badge { font-size: 11px; padding: 2px 8px; border-radius: 999px; background: var(--bg2); white-space: nowrap; }
+.badge.realizada { color: var(--ok); } .badge.cancelada, .badge.noasistio { color: var(--danger); }
+.empty { color: var(--muted); text-align: center; padding: 40px 16px; }
+
+/* Modal */
+dialog { border: 0; border-radius: 16px; padding: 0; width: min(560px, calc(100vw - 32px)); max-height: calc(100vh - 32px); background: var(--card); color: var(--fg); box-shadow: var(--shadow); }
+dialog::backdrop { background: rgba(0,0,0,.45); }
+dialog form { padding: 20px 22px; }
+dialog h3 { margin: 0 0 6px; font-size: 18px; }
+.mfoot { display: flex; gap: 8px; margin-top: 18px; flex-wrap: wrap; }
+.check { display: flex; align-items: center; gap: 8px; margin-top: 12px; color: var(--fg); font-size: 14px; }
+.check input { width: auto; }
+.typepick { display: flex; gap: 6px; flex-wrap: wrap; }
+.typepick label { margin: 0; display: flex; align-items: center; gap: 6px; border: 1px solid var(--line); border-radius: 999px; padding: 5px 10px; color: var(--fg); font-size: 13px; cursor: pointer; }
+.typepick input { width: auto; margin: 0; }
+.typepick label:has(input:checked) { border-color: var(--accent); background: var(--hover); }
+.range-row { display: flex; align-items: center; gap: 10px; }
+.range-row output { min-width: 28px; font-weight: 700; text-align: center; }
+
+#print-area { display: none; }
+@media print {
+  body > *:not(#print-area) { display: none !important; }
+  #print-area { display: block; color: #000; font-size: 12px; }
+  #print-area h1 { font-size: 18px; } #print-area .entry { break-inside: avoid; border: 1px solid #999; padding: 8px; margin: 8px 0; }
+}
+
+@media (max-width: 900px) {
+  .cal-side { display: none; }
+  .plist { width: 100%; border-right: 0; }
+  .crm.detail-open .plist { display: none; }
+  .crm:not(.detail-open) .pdetail { display: none; }
+  .brand { font-size: 16px; }
+  .lbl { display: none; }
+  #status { order: 10; width: 100%; text-align: left; padding: 0; }
+  .tabs button { padding: 8px 10px; }
+  header.top { padding: 8px 12px; }
+  .cal-bar { padding: 8px 12px; }
+  .pdetail { padding: 16px; }
+  .entry dl { grid-template-columns: 1fr; }
+}
+@media (min-width: 901px) { .only-mobile { display: none !important; } }
+</style>
+
+
+<div id="lock"><div class="lock-card"><h1>Agenda Fisio</h1><p class="loading" id="boot-msg">Cargando la agenda…</p></div></div>
+
+<div id="app" class="hidden">
+  <header class="top">
+    <span class="brand">Agenda Fisio</span>
+    <nav class="tabs">
+      <button data-action="tab" data-tab="cal" class="on">Calendario</button>
+      <button data-action="tab" data-tab="crm">Pacientes</button>
+    </nav>
+    <span class="spacer"></span>
+    <button id="status" data-action="status"></button>
+    <button class="btn icon" data-action="settings" title="Ajustes y copias">⚙︎<span class="lbl"> Ajustes</span></button>
+    <button class="btn icon" data-action="lock" title="Bloquear">🔒<span class="lbl"> Bloquear</span></button>
+  </header>
+  <main id="main"></main>
+</div>
+
+<dialog id="modal"><form id="modal-form" novalidate></form></dialog>
+<dialog id="ask"><div style="padding:20px 22px"><p id="ask-msg" style="margin:0 0 6px;white-space:pre-wrap"></p><div class="mfoot"><button class="btn primary" data-v="yes" id="ask-yes">Sí</button><button class="btn" data-v="no" id="ask-no">Cancelar</button></div></div></dialog>
+<div id="print-area"></div>
+
+<script>
+"use strict";
+
+/* ---------- Servidor de sincronización (Supabase). Solo recibe datos cifrados. ---------- */
+const CLOUD = { url: "__SUPABASE_URL__", key: "__SUPABASE_ANON_KEY__" };
+const cloudOn = /^https?:\/\//.test(CLOUD.url) && !CLOUD.key.startsWith("__");
+addEventListener("error", e => { const m = document.getElementById("boot-msg"); if (m) m.textContent = "Error al cargar: " + (e.message || "desconocido"); });
+
+/* ---------- Utilidades ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const uid = () => crypto.randomUUID();
+const pad = n => String(n).padStart(2, "0");
+const dKey = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const tKey = d => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+const parseLocal = s => { const [d, t = "00:00"] = s.split("T"); const [y, m, dd] = d.split("-").map(Number); const [h, mi] = t.split(":").map(Number); return new Date(y, m - 1, dd, h, mi); };
+const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+const startOfWeek = d => { const x = new Date(d.getFullYear(), d.getMonth(), d.getDate()); const wd = (x.getDay() + 6) % 7; return addDays(x, -wd); };
+const sameDay = (a, b) => dKey(a) === dKey(b);
+const fmt = (d, o) => new Intl.DateTimeFormat("es-ES", o).format(d);
+const fmtDate = d => fmt(d, { day: "numeric", month: "short", year: "numeric" });
+const fmtLong = d => fmt(d, { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+const WD = ["L", "M", "X", "J", "V", "S", "D"];
+const fullName = p => p ? `${p.nombre} ${p.apellidos || ""}`.trim() : "";
+const age = s => { if (!s) return null; const b = parseLocal(s), n = new Date(); let a = n.getFullYear() - b.getFullYear(); if (n < new Date(n.getFullYear(), b.getMonth(), b.getDate())) a--; return a; };
+const STATUS = { programada: "Programada", realizada: "Realizada", noasistio: "No asistió", cancelada: "Cancelada" };
+
+function ask(msg, yes = "Eliminar", single = false) {
+  const d = $("#ask");
+  $("#ask-msg").textContent = msg; $("#ask-yes").textContent = yes;
+  $("#ask-yes").className = "btn " + (single || yes !== "Eliminar" ? "primary" : "primary danger-bg");
+  $("#ask-no").hidden = single;
+  d.returnValue = "";
+  d.showModal();
+  return new Promise(res => d.addEventListener("close", () => res(d.returnValue === "yes"), { once: true }));
+}
+const notify = msg => ask(msg, "Entendido", true);
+document.addEventListener("click", e => { const b = e.target.closest("#ask [data-v]"); if (b) $("#ask").close(b.dataset.v); });
+
+/* ---------- Cifrado ---------- */
+// De la contraseña salen tres cosas independientes: el identificador de la agenda en el servidor,
+// un permiso de escritura y la clave de cifrado (AES-GCM 256). Ni la contraseña ni la clave salen del dispositivo.
+const FORMAT = "agenda-fisio-cifrada";
+const ITER = 600000;
+const APP_SALT = new TextEncoder().encode("agenda-fisio/2026/v2");
+const enc = s => new TextEncoder().encode(s);
+function toB64(u8) { let s = ""; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); }
+function fromB64(s) { const b = atob(s); const u = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u; }
+const hex = buf => [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, "0")).join("");
+async function deriveAll(pw) {
+  const base = await crypto.subtle.importKey("raw", enc(pw), "PBKDF2", false, ["deriveBits"]);
+  const bits = await crypto.subtle.deriveBits({ name: "PBKDF2", salt: APP_SALT, iterations: ITER, hash: "SHA-256" }, base, 256);
+  const hk = await crypto.subtle.importKey("raw", bits, "HKDF", false, ["deriveBits", "deriveKey"]);
+  const info = s => ({ name: "HKDF", hash: "SHA-256", salt: new Uint8Array(32), info: enc(s) });
+  return {
+    id: hex(await crypto.subtle.deriveBits(info("vault-id"), hk, 256)),
+    token: hex(await crypto.subtle.deriveBits(info("write-token"), hk, 256)),
+    key: await crypto.subtle.deriveKey(info("encryption-key"), hk, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]),
+  };
+}
+// Se comprime antes de cifrar (el cifrado no se puede comprimir después).
+const gz = "CompressionStream" in window;
+async function pack(str) {
+  const bytes = enc(str);
+  if (!gz) return { bytes, z: null };
+  return { bytes: new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new CompressionStream("gzip"))).arrayBuffer()), z: "gzip" };
+}
+async function unpack(buf, z) {
+  if (!z) return new TextDecoder().decode(buf);
+  return new Response(new Blob([buf]).stream().pipeThrough(new DecompressionStream("gzip"))).text();
+}
+async function seal(data, k) {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const { bytes, z } = await pack(JSON.stringify(data));
+  const ct = await crypto.subtle.encrypt({ name: "AES-GCM", iv, additionalData: enc(k.id) }, k.key, bytes);
+  return JSON.stringify({ format: FORMAT, v: 2, z, iv: toB64(iv), ct: toB64(new Uint8Array(ct)) });
+}
+function parseVault(text) {
+  let f;
+  try { f = JSON.parse(text); } catch { throw new Error("El archivo no es una agenda cifrada válida."); }
+  if (f?.format !== FORMAT) throw new Error("El archivo no es una agenda cifrada válida.");
+  return f;
+}
+async function openVault(text, k) {
+  const f = typeof text === "string" ? parseVault(text) : text;
+  let pt;
+  try { pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv: fromB64(f.iv), additionalData: enc(k.id) }, k.key, fromB64(f.ct)); }
+  catch { throw new Error("Contraseña incorrecta."); }
+  return JSON.parse(await unpack(pt, f.z));
+}
+// Copias .fisio de la primera versión (sal propia en el archivo).
+async function openV1(f, pw) {
+  const base = await crypto.subtle.importKey("raw", enc(pw), "PBKDF2", false, ["deriveKey"]);
+  const key = await crypto.subtle.deriveKey({ name: "PBKDF2", salt: fromB64(f.kdf.salt), iterations: f.kdf.iter, hash: "SHA-256" }, base, { name: "AES-GCM", length: 256 }, false, ["decrypt"]);
+  let pt;
+  try { pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv: fromB64(f.iv) }, key, fromB64(f.ct)); }
+  catch { throw new Error("Contraseña incorrecta."); }
+  return JSON.parse(await unpack(pt, f.z));
+}
+
+/* ---------- Copia local cifrada (para abrir sin conexión) ---------- */
+const idb = (() => {
+  let p;
+  const db = () => p ??= new Promise((res, rej) => { const r = indexedDB.open("agenda-fisio", 1); r.onupgradeneeded = () => r.result.createObjectStore("kv"); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
+  const tx = async (mode, fn) => { const d = await db(); return new Promise((res, rej) => { const t = d.transaction("kv", mode); const req = fn(t.objectStore("kv")); t.oncomplete = () => res(req.result); t.onerror = () => rej(t.error); }); };
+  // Algunos navegadores bloquean IndexedDB o nunca responden: no dejar la app colgada.
+  const safe = p => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), 4000))]);
+  const wrap = fn => (...a) => { try { return safe(fn(...a)); } catch (e) { return Promise.reject(e); } };
+  return { get: wrap(k => tx("readonly", s => s.get(k))), set: wrap((k, v) => tx("readwrite", s => s.put(v, k))), del: wrap(k => tx("readwrite", s => s.delete(k))) };
+})();
+
+/* ---------- Servidor ---------- */
+const cloud = {
+  async rpc(fn, args) {
+    if (!cloudOn) throw Object.assign(new Error("Sin servidor"), { code: "offline" });
+    let r;
+    try {
+      r = await fetch(`${CLOUD.url}/rest/v1/rpc/${fn}`, {
+        method: "POST", cache: "no-store",
+        headers: { apikey: CLOUD.key, Authorization: `Bearer ${CLOUD.key}`, "Content-Type": "application/json" },
+        body: JSON.stringify(args),
+      });
+    } catch { throw Object.assign(new Error("Sin conexión"), { code: "offline" }); }
+    const t = await r.text();
+    let j = null; try { j = t ? JSON.parse(t) : null; } catch { }
+    if (!r.ok) { const m = j?.message || ""; throw Object.assign(new Error(m || "Error del servidor"), { code: ["conflict", "missing", "forbidden"].includes(m) ? m : "server" }); }
+    return j;
+  },
+  async get(id) { const rows = await cloud.rpc("vault_get", { p_id: id }); return rows?.[0] || null; },
+  version: id => cloud.rpc("vault_version", { p_id: id }),
+  put: (k, text, expected) => cloud.rpc("vault_put", { p_id: k.id, p_token: k.token, p_data: text, p_expected: expected }),
+  del: k => cloud.rpc("vault_delete", { p_id: k.id, p_token: k.token }),
+};
+
+/* ---------- Estado ---------- */
+const emptyData = () => ({
+  version: 1, updatedAt: new Date().toISOString(),
+  patients: [], appointments: [], sessions: [],
+  settings: {
+    dayStart: 8, dayEnd: 21, duration: 60, autoLock: 10,
+    types: [
+      { id: "primera", name: "Primera visita", color: "#8e24aa" },
+      { id: "tratamiento", name: "Sesión de tratamiento", color: "#0b8043" },
+      { id: "domicilio", name: "A domicilio", color: "#e8710a" },
+      { id: "revision", name: "Revisión", color: "#1a73e8" },
+      { id: "personal", name: "Personal / bloqueo", color: "#616161" },
+    ],
+  },
+});
+let S = null; // { data, key, salt, iter, handle, dirty, fileError }
+const ui = { tab: "cal", view: innerWidth < 700 ? "day" : "week", cursor: new Date(), patientId: null, search: "" };
+
+const typeOf = id => S.data.settings.types.find(t => t.id === id) || S.data.settings.types[0];
+const patient = id => S.data.patients.find(p => p.id === id);
+const apptTitle = a => a.title || fullName(patient(a.patientId)) || "(sin título)";
+
+/* ---------- Guardado y sincronización ---------- */
+const clone = o => JSON.parse(JSON.stringify(o));
+const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+// Fusión a tres bandas por registro: si el móvil y el ordenador cambian cosas distintas, se conservan ambas.
+function merge(base, local, remote) {
+  const out = { ...remote };
+  for (const k of ["patients", "appointments", "sessions"]) {
+    const B = new Map((base?.[k] || []).map(x => [x.id, x])), L = new Map(local[k].map(x => [x.id, x])), R = new Map(remote[k].map(x => [x.id, x]));
+    const res = [];
+    for (const id of new Set([...L.keys(), ...R.keys()])) {
+      const b = B.get(id), l = L.get(id), r = R.get(id);
+      const v = same(l, r) ? l : same(l, b) ? r : same(r, b) ? l : (l ?? r);
+      if (v) res.push(v);
+    }
+    out[k] = res;
+  }
+  out.settings = same(local.settings, base?.settings) ? remote.settings : local.settings;
+  out.updatedAt = new Date().toISOString();
+  return out;
+}
+let saveTimer, retryTimer, chain = Promise.resolve(), pendingRender = false;
+function commit() {
+  S.data.updatedAt = new Date().toISOString();
+  S.dirty = true; setStatus();
+  clearTimeout(saveTimer); saveTimer = setTimeout(flush, 800);
+  render();
+}
+function flush() { clearTimeout(saveTimer); chain = chain.then(() => doSync(false), () => doSync(false)); return chain; }
+function pull() { chain = chain.then(() => doSync(true), () => doSync(true)); return chain; }
+async function saveLocal(s) {
+  try { await idb.set("vault:" + s.keys.id, { text: await seal(s.data, s.keys), base: await seal(s.base, s.keys), version: s.version }); } catch { }
+}
+const err = code => Object.assign(new Error(code), { code });
+async function pullMerge(s) {
+  const r = await cloud.get(s.keys.id);
+  if (!r) throw err("missing");
+  const remoteData = await openVault(r.data, s.keys);
+  s.data = merge(s.base, s.data, remoteData); s.base = remoteData; s.version = r.version;
+  if (S === s) { if (modal.open) pendingRender = true; else render(); }
+}
+async function doSync(checkRemote) {
+  const s = S; if (!s) return;
+  s.dirty = false;
+  await saveLocal(s);
+  if (!cloudOn) return setStatus();
+  try {
+    if (checkRemote && s.version > 0) {
+      const v = await cloud.version(s.keys.id);
+      if (v == null) throw err("missing");
+      if (v !== s.version) await pullMerge(s);
+    }
+    for (let i = 0; s.version === 0 || !same(s.data, s.base); i++) {
+      if (i > 5) throw err("server");
+      const snap = clone(s.data);
+      try { s.version = await cloud.put(s.keys, await seal(snap, s.keys), s.version); s.base = snap; }
+      catch (e) { if (e.code !== "conflict") throw e; await pullMerge(s); }
+    }
+    s.syncError = null;
+    await saveLocal(s);
+  } catch (e) {
+    if (e.code === "missing") { if (S === s) lockNow("La contraseña de esta agenda se cambió en otro dispositivo. Entra con la nueva."); return; }
+    s.syncError = e.code === "offline" ? "Sin conexión." : "No se pudo sincronizar.";
+    clearTimeout(retryTimer); retryTimer = setTimeout(flush, 20000);
+  }
+  if (S === s) setStatus();
+}
+function setStatus() {
+  const el = $("#status"); if (!S) return;
+  el.classList.remove("warn");
+  if (S.syncError) { el.textContent = `⚠ ${S.syncError} Los cambios se guardan en este dispositivo y se sincronizarán solos.`; el.classList.add("warn"); }
+  else if (S.dirty || !same(S.data, S.base)) el.textContent = "Guardando…";
+  else if (cloudOn) el.textContent = "🔐 Cifrado y sincronizado";
+  else { el.textContent = "⚠ Solo en este dispositivo"; el.classList.add("warn"); }
+}
+function downloadBackup() {
+  seal(S.data, S.keys).then(text => {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([text], { type: "application/octet-stream" }));
+    a.download = `agenda-fisio-copia-${dKey(new Date())}.fisio`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  });
+}
+// Comprobar cambios del otro dispositivo.
+setInterval(() => { if (S && cloudOn && !document.hidden && !modal.open && !S.dirty) pull(); }, 15000);
+document.addEventListener("visibilitychange", () => { if (!S) return; if (document.hidden) flush(); else if (!modal.open) pull(); });
+
+/* ---------- Entrar / bloquear ---------- */
+async function showLock(msg = "") {
+  $("#app").classList.add("hidden"); $("#lock").classList.remove("hidden");
+  if (!window.isSecureContext || !crypto.subtle) {
+    $("#lock").innerHTML = `<div class="lock-card"><h1>Agenda Fisio</h1><p class="err">Este navegador no permite el cifrado aquí. Abre la agenda desde su dirección https:// en Safari o Chrome.</p></div>`;
+    return;
+  }
+  $("#lock").innerHTML = `
+    <form class="lock-card" id="unlock-form">
+      <h1>🔒 Agenda Fisio</h1>
+      <p>Escribe la contraseña de tu agenda.</p>
+      <label for="pw">Contraseña</label>
+      <input id="pw" type="password" autocomplete="current-password" required autofocus>
+      <div class="err">${esc(msg)}</div>
+      <button class="btn primary" type="submit">Entrar</button>
+      <div class="shield">¿Primera vez? Escribe la contraseña que quieras usar y pulsa Entrar. Te pediremos repetirla para crear la agenda.</div>
+    </form>`;
+  $("#unlock-form").onsubmit = async e => {
+    e.preventDefault();
+    const btn = e.target.querySelector("button[type=submit]"), pw = $("#pw").value;
+    btn.disabled = true; btn.textContent = "Abriendo…";
+    try { await enter(pw); } catch (er) { showLock(er.message); }
+  };
+}
+async function enter(pw) {
+  const keys = await deriveAll(pw);
+  const local = await idb.get("vault:" + keys.id).catch(() => null);
+  let remote = null, offline = false;
+  if (cloudOn) { try { remote = await cloud.get(keys.id); } catch { offline = true; } }
+  if (!local && !remote) {
+    if (offline) throw new Error("Sin conexión. Conéctate a internet para entrar por primera vez en este dispositivo.");
+    return showCreate(pw, keys);
+  }
+  let data, base, version;
+  if (remote) {
+    const rd = await openVault(remote.data, keys);
+    if (local) {
+      const ld = await openVault(local.text, keys), lb = await openVault(local.base, keys);
+      if (local.version === remote.version) { data = ld; base = lb; } else { data = merge(lb, ld, rd); base = rd; }
+    } else { data = rd; base = clone(rd); }
+    version = remote.version;
+  } else {
+    data = await openVault(local.text, keys); base = await openVault(local.base, keys); version = local.version;
+  }
+  S = { keys, data, base, version, dirty: false, syncError: offline ? "Sin conexión." : null };
+  enterApp();
+  flush();
+}
+function showCreate(pw, keys) {
+  $("#lock").innerHTML = `
+    <form class="lock-card" id="create-form">
+      <h1>Crear agenda</h1>
+      <p>No hay ninguna agenda con esa contraseña. Si ya tenías una, vuelve atrás y revisa que esté bien escrita.</p>
+      <p>Si es la primera vez, repite la contraseña para crear tu agenda.</p>
+      <label for="pw2">Repite la contraseña</label>
+      <input id="pw2" type="password" autocomplete="new-password" required autofocus>
+      <div class="err"></div>
+      <button class="btn primary" type="submit">Crear agenda nueva</button>
+      <div class="links"><button type="button" class="linkbtn" id="back">← Volver</button></div>
+      <div class="shield">⚠ Nadie puede recuperar la contraseña. Si la olvidas, los datos no se pueden abrir. Apúntala en un lugar seguro y no la compartas.</div>
+    </form>`;
+  $("#back").onclick = () => showLock();
+  $("#create-form").onsubmit = e => {
+    e.preventDefault();
+    const er = e.target.querySelector(".err");
+    if ($("#pw2").value !== pw) return er.textContent = "Las contraseñas no coinciden.";
+    if (pw.length < 8) return er.textContent = "Usa una contraseña de al menos 8 caracteres.";
+    const data = emptyData();
+    S = { keys, data, base: clone(data), version: 0, dirty: true, syncError: null };
+    enterApp();
+    flush();
+  };
+}
+function enterApp() {
+  $("#lock").classList.add("hidden"); $("#lock").innerHTML = "";
+  $("#app").classList.remove("hidden");
+  setStatus(); render(); lastActivity = Date.now();
+}
+async function lockNow(msg = "") {
+  if (!S) return;
+  if (!msg) await flush();
+  S = null; closeModal(); $("#main").innerHTML = ""; $("#print-area").innerHTML = "";
+  showLock(msg);
+}
+let lastActivity = Date.now();
+["pointerdown", "keydown", "wheel", "touchstart"].forEach(ev => addEventListener(ev, () => lastActivity = Date.now(), { passive: true }));
+setInterval(() => { if (S && S.data.settings.autoLock > 0 && Date.now() - lastActivity > S.data.settings.autoLock * 60000) lockNow(); }, 15000);
+addEventListener("beforeunload", e => { if (S && (S.dirty || !same(S.data, S.base))) { flush(); e.preventDefault(); e.returnValue = ""; } });
+
+/* ---------- Modal ---------- */
+const modal = $("#modal"), mform = $("#modal-form");
+let modalSubmit = null;
+function openModal(html, onSubmit) {
+  mform.innerHTML = html; modalSubmit = onSubmit;
+  if (!modal.open) modal.showModal();
+  const f = mform.querySelector("[autofocus]"); if (f) f.focus();
+}
+function closeModal() { if (modal.open) modal.close(); mform.innerHTML = ""; }
+mform.addEventListener("submit", e => {
+  e.preventDefault();
+  const btn = e.submitter;
+  if (btn && btn.value === "cancel") return closeModal();
+  if (btn?.value !== "delete" && !mform.reportValidity()) return;
+  const fd = Object.fromEntries(new FormData(mform));
+  if (modalSubmit && modalSubmit(fd, btn?.value) !== false) closeModal();
+});
+modal.addEventListener("cancel", () => { mform.innerHTML = ""; });
+modal.addEventListener("close", () => { if (pendingRender && S) { pendingRender = false; render(); } });
+
+/* ---------- Render ---------- */
+function render() {
+  if (!S) return;
+  document.querySelectorAll(".tabs button").forEach(b => b.classList.toggle("on", b.dataset.tab === ui.tab));
+  const main = $("#main");
+  const scrollY = main.querySelector(".grid-body")?.scrollTop;
+  main.innerHTML = ui.tab === "cal" ? renderCalendar() : renderCRM();
+  const gb = main.querySelector(".grid-body");
+  if (gb) {
+    const head = main.querySelector(".grid-head"); head.style.setProperty("--sbw", (gb.offsetWidth - gb.clientWidth) + "px");
+    if (scrollY != null) gb.scrollTop = scrollY;
+    else { const st = S.data.settings, now = new Date(); gb.scrollTop = Math.max(0, (Math.min(Math.max(now.getHours(), st.dayStart), st.dayEnd) - st.dayStart - 1)) * parseInt(getComputedStyle(document.documentElement).getPropertyValue("--h")); }
+  }
+}
+
+/* Calendario */
+function apptsOn(day) {
+  const k = dKey(day);
+  return S.data.appointments.filter(a => a.start.slice(0, 10) === k).sort((a, b) => a.start.localeCompare(b.start));
+}
+function calTitle() {
+  const c = ui.cursor;
+  if (ui.view === "day") return fmt(c, { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  if (ui.view === "month") return fmt(c, { month: "long", year: "numeric" });
+  const a = startOfWeek(c), b = addDays(a, 6);
+  return a.getMonth() === b.getMonth() ? `${a.getDate()} – ${b.getDate()} ${fmt(b, { month: "long", year: "numeric" })}` : `${fmt(a, { day: "numeric", month: "short" })} – ${fmt(b, { day: "numeric", month: "short", year: "numeric" })}`;
+}
+function renderCalendar() {
+  return `<div class="cal-wrap">
+    <aside class="cal-side">
+      <button class="btn primary" data-action="new-appt" style="width:100%;padding:10px">＋ Nueva cita</button>
+      <div style="margin-top:16px">${renderMini()}</div>
+      <div class="side-h">Hoy · ${fmt(new Date(), { day: "numeric", month: "long" })}</div>
+      ${apptsOn(new Date()).map(a => `<button class="agenda-item" data-action="edit-appt" data-id="${a.id}"><span class="dot" style="background:${typeOf(a.type).color}"></span><span><b>${a.start.slice(11)}</b> ${esc(apptTitle(a))}<br><small style="color:var(--muted)">${esc(STATUS[a.status])}</small></span></button>`).join("") || `<p style="color:var(--muted);font-size:13px">Sin citas hoy.</p>`}
+      <div class="side-h">Tipos de cita</div>
+      <div class="legend">${S.data.settings.types.map(t => `<div><span class="dot" style="background:${t.color};margin:0"></span>${esc(t.name)}</div>`).join("")}</div>
+    </aside>
+    <section class="cal-main">
+      <div class="cal-bar">
+        <button class="btn" data-action="today">Hoy</button>
+        <button class="btn icon" data-action="prev" aria-label="Anterior">‹</button>
+        <button class="btn icon" data-action="next" aria-label="Siguiente">›</button>
+        <span class="cal-title">${esc(cap(calTitle()))}</span>
+        <span class="spacer"></span>
+        <div class="seg">${[["day", "Día"], ["week", "Semana"], ["month", "Mes"]].map(([v, l]) => `<button data-action="view" data-view="${v}" class="${ui.view === v ? "on" : ""}">${l}</button>`).join("")}</div>
+        <button class="btn primary only-mobile" data-action="new-appt">＋</button>
+      </div>
+      ${ui.view === "month" ? renderMonth() : renderTimeGrid(ui.view === "day" ? [new Date(ui.cursor)] : [...Array(7)].map((_, i) => addDays(startOfWeek(ui.cursor), i)))}
+    </section>
+  </div>`;
+}
+function monthDays(c) { const first = new Date(c.getFullYear(), c.getMonth(), 1); const s = startOfWeek(first); return [...Array(42)].map((_, i) => addDays(s, i)); }
+function renderMini() {
+  const c = ui.mini || ui.cursor, days = monthDays(c), today = new Date();
+  let rows = "";
+  for (let w = 0; w < 6; w++) rows += "<tr>" + days.slice(w * 7, w * 7 + 7).map(d => `<td><button data-action="mini-day" data-date="${dKey(d)}" class="${d.getMonth() !== c.getMonth() ? "out" : ""} ${sameDay(d, today) ? "today" : ""} ${sameDay(d, ui.cursor) ? "sel" : ""}">${d.getDate()}</button></td>`).join("") + "</tr>";
+  return `<div class="mini-head"><span>${cap(fmt(c, { month: "long", year: "numeric" }))}</span><span><button class="btn icon small" data-action="mini-prev">‹</button> <button class="btn icon small" data-action="mini-next">›</button></span></div>
+    <table class="mini"><tr>${WD.map(d => `<th>${d}</th>`).join("")}</tr>${rows}</table>`;
+}
+function layoutDay(list) {
+  const st = S.data.settings, base = st.dayStart * 60;
+  const evs = list.map(a => { const d = parseLocal(a.start); const s = d.getHours() * 60 + d.getMinutes() - base; return { a, s, e: s + Math.max(15, +a.duration || 60) }; }).sort((x, y) => x.s - y.s || y.e - x.e);
+  let cluster = [], end = -Infinity;
+  const finish = () => { const lanes = []; for (const e of cluster) { let i = lanes.findIndex(x => x <= e.s); if (i < 0) { i = lanes.length; lanes.push(0); } lanes[i] = e.e; e.lane = i; } cluster.forEach(e => e.lanes = lanes.length); cluster = []; };
+  for (const e of evs) { if (cluster.length && e.s >= end) finish(); cluster.push(e); end = Math.max(cluster.length === 1 ? e.e : end, e.e); }
+  if (cluster.length) finish();
+  return evs;
+}
+function renderTimeGrid(days) {
+  const st = S.data.settings, H = 48, today = new Date();
+  const hours = []; for (let h = st.dayStart; h < st.dayEnd; h++) hours.push(h);
+  const total = (st.dayEnd - st.dayStart) * 60;
+  const cols = days.map(d => {
+    const evs = layoutDay(apptsOn(d)).map(({ a, s, e, lane, lanes }) => {
+      const top = Math.max(0, s) / 60 * H, h = Math.max(18, (Math.min(e, total) - Math.max(0, s)) / 60 * H - 2);
+      const t = typeOf(a.type), end = new Date(parseLocal(a.start).getTime() + a.duration * 60000);
+      return `<button class="ev ${a.status}" data-action="edit-appt" data-id="${a.id}" style="top:${top}px;height:${h}px;left:calc(${lane / lanes * 100}% + 2px);width:calc(${100 / lanes}% - 4px);background:${t.color}" title="${esc(apptTitle(a))}"><b>${esc(apptTitle(a))}</b><small>${a.start.slice(11)} – ${tKey(end)}</small></button>`;
+    }).join("");
+    let now = "";
+    if (sameDay(d, today)) { const m = today.getHours() * 60 + today.getMinutes() - st.dayStart * 60; if (m >= 0 && m <= total) now = `<div class="now" style="top:${m / 60 * H}px"></div>`; }
+    const wk = d.getDay() === 0 || d.getDay() === 6;
+    return `<div class="col ${wk ? "weekend" : ""}" data-action="slot" data-date="${dKey(d)}" style="height:${hours.length * H}px">${evs}${now}</div>`;
+  }).join("");
+  return `<div class="grid" style="--cols:${days.length}">
+    <div class="grid-head"><div></div>${days.map(d => `<button class="dayhead ${sameDay(d, today) ? "today" : ""}" data-action="goto-day" data-date="${dKey(d)}">${fmt(d, { weekday: "short" })}<span>${d.getDate()}</span></button>`).join("")}</div>
+    <div class="grid-body"><div class="gutter">${hours.map(h => `<div>${h === st.dayStart ? "" : pad(h) + ":00"}</div>`).join("")}</div>${cols}</div>
+  </div>`;
+}
+function renderMonth() {
+  const c = ui.cursor, days = monthDays(c), today = new Date();
+  return `<div class="month">${WD.map(d => `<div class="wd">${d}</div>`).join("")}${days.map(d => {
+    const list = apptsOn(d), show = list.slice(0, 3);
+    return `<div class="mcell ${d.getMonth() !== c.getMonth() ? "out" : ""} ${sameDay(d, today) ? "today" : ""}" data-action="month-cell" data-date="${dKey(d)}">
+      <button class="num" data-action="goto-day" data-date="${dKey(d)}">${d.getDate()}</button>
+      ${show.map(a => `<button class="chip ${a.status}" data-action="edit-appt" data-id="${a.id}" style="background:${typeOf(a.type).color}">${a.start.slice(11)} ${esc(apptTitle(a))}</button>`).join("")}
+      ${list.length > 3 ? `<button class="more" data-action="goto-day" data-date="${dKey(d)}">+${list.length - 3} más</button>` : ""}
+    </div>`;
+  }).join("")}</div>`;
+}
+
+/* Citas */
+function patientOptions(sel) {
+  return `<option value="">— Sin paciente (bloqueo / personal) —</option><option value="__new">＋ Nuevo paciente…</option>` +
+    [...S.data.patients].sort((a, b) => fullName(a).localeCompare(fullName(b), "es")).map(p => `<option value="${p.id}" ${p.id === sel ? "selected" : ""}>${esc(fullName(p))}${p.telefono ? " · " + esc(p.telefono) : ""}</option>`).join("");
+}
+function openAppt(a) {
+  const isNew = !a.id, st = S.data.settings;
+  const dur = a.duration || st.duration;
+  openModal(`<h3>${isNew ? "Nueva cita" : "Editar cita"}</h3>
+    <label>Paciente</label>
+    <select name="patientId" id="ap-pat">${patientOptions(a.patientId)}</select>
+    <div id="ap-new" class="hidden"><div class="row"><div><label>Nombre *</label><input name="newNombre"></div><div><label>Apellidos</label><input name="newApellidos"></div></div><label>Teléfono</label><input name="newTel" type="tel"></div>
+    <label>Título (opcional — por defecto, el nombre del paciente)</label>
+    <input name="title" value="${esc(a.title)}">
+    <div class="row">
+      <div><label>Fecha</label><input type="date" name="date" required value="${a.start.slice(0, 10)}"></div>
+      <div><label>Hora</label><input type="time" name="time" required step="300" value="${a.start.slice(11, 16)}"></div>
+      <div><label>Duración</label><select name="duration">${[15, 30, 45, 60, 75, 90, 120].map(m => `<option value="${m}" ${+dur === m ? "selected" : ""}>${m} min</option>`).join("")}</select></div>
+    </div>
+    <label>Tipo</label>
+    <div class="typepick">${st.types.map((t, i) => `<label><input type="radio" name="type" value="${t.id}" ${(a.type ? a.type === t.id : i === 1) ? "checked" : ""}><span class="dot" style="background:${t.color};margin:0"></span>${esc(t.name)}</label>`).join("")}</div>
+    <div class="row">
+      <div><label>Estado</label><select name="status">${Object.entries(STATUS).map(([k, v]) => `<option value="${k}" ${(a.status || "programada") === k ? "selected" : ""}>${v}</option>`).join("")}</select></div>
+      ${isNew ? `<div><label>Repetir cada semana</label><select name="repeat">${[1, 2, 3, 4, 5, 6, 8, 10, 12].map(n => `<option value="${n}">${n === 1 ? "No repetir" : n + " semanas"}</option>`).join("")}</select></div>` : ""}
+    </div>
+    <label>Notas de la cita</label>
+    <textarea name="notes">${esc(a.notes)}</textarea>
+    <div class="mfoot">
+      <button class="btn primary" value="save">Guardar</button>
+      ${!isNew && a.patientId ? `<button class="btn" value="session">📝 Registrar sesión</button><button class="btn" value="open">Ver ficha</button>` : ""}
+      <span class="spacer"></span>
+      ${!isNew ? `<button class="btn danger" value="delete" formnovalidate>Eliminar</button>` : ""}
+      <button class="btn" value="cancel" formnovalidate>Cancelar</button>
+    </div>`, (fd, action) => {
+    if (action === "delete") {
+      ask("¿Eliminar esta cita?").then(ok => { if (ok) { S.data.appointments = S.data.appointments.filter(x => x.id !== a.id); closeModal(); commit(); } });
+      return false;
+    }
+    let pid = fd.patientId;
+    if (pid === "__new") {
+      if (!fd.newNombre.trim()) { notify("Escribe el nombre del nuevo paciente."); return false; }
+      const p = newPatient({ nombre: fd.newNombre.trim(), apellidos: fd.newApellidos.trim(), telefono: fd.newTel.trim() });
+      S.data.patients.push(p); pid = p.id;
+    }
+    const base = { patientId: pid || null, title: fd.title.trim(), duration: +fd.duration, type: fd.type, status: fd.status, notes: fd.notes };
+    if (isNew) {
+      const d0 = parseLocal(`${fd.date}T${fd.time}`), series = +fd.repeat > 1 ? uid() : null;
+      for (let i = 0; i < (+fd.repeat || 1); i++) S.data.appointments.push({ id: uid(), ...base, series, start: `${dKey(addDays(d0, i * 7))}T${fd.time}`, createdAt: new Date().toISOString() });
+    } else Object.assign(S.data.appointments.find(x => x.id === a.id), base, { start: `${fd.date}T${fd.time}` });
+    commit();
+    if (action === "session") { setTimeout(() => openSession({ patientId: pid, date: fd.date, appointmentId: a.id }), 0); }
+    if (action === "open") { ui.tab = "crm"; ui.patientId = pid; render(); }
+  });
+  const sel = $("#ap-pat"), nw = $("#ap-new");
+  sel.onchange = () => { nw.classList.toggle("hidden", sel.value !== "__new"); if (sel.value === "__new") nw.querySelector("input").focus(); };
+}
+
+/* Pacientes */
+const newPatient = o => ({ id: uid(), nombre: "", apellidos: "", telefono: "", email: "", nacimiento: "", dni: "", direccion: "", profesion: "", diagnostico: "", antecedentes: "", alergias: "", notas: "", consentimiento: false, consentimientoFecha: "", createdAt: new Date().toISOString(), ...o });
+function filteredPatients() {
+  const q = ui.search.trim().toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "");
+  const norm = s => String(s || "").toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "");
+  return [...S.data.patients].filter(p => !q || [fullName(p), p.telefono, p.dni, p.email].some(v => norm(v).includes(q))).sort((a, b) => fullName(a).localeCompare(fullName(b), "es"));
+}
+function lastVisit(pid) {
+  const s = S.data.sessions.filter(x => x.patientId === pid).map(x => x.date).sort().pop();
+  return s ? fmtDate(parseLocal(s)) : null;
+}
+function renderPList() {
+  const list = filteredPatients();
+  return list.map(p => { const lv = lastVisit(p.id); return `<button class="pitem ${p.id === ui.patientId ? "on" : ""}" data-action="pick-patient" data-id="${p.id}"><b>${esc(fullName(p))}</b><small>${esc(p.telefono || "")}${p.telefono && lv ? " · " : ""}${lv ? "Última sesión: " + lv : ""}</small></button>`; }).join("")
+    || `<div class="empty">${S.data.patients.length ? "Sin resultados." : "Aún no hay pacientes.<br>Pulsa «＋ Paciente» para crear el primero."}</div>`;
+}
+function renderCRM() {
+  const p = patient(ui.patientId);
+  return `<div class="crm ${p ? "detail-open" : ""}">
+    <aside class="plist">
+      <div class="plist-top"><input id="psearch" type="search" placeholder="Buscar nombre, teléfono, DNI…" value="${esc(ui.search)}"><button class="btn primary" data-action="new-patient">＋ Paciente</button></div>
+      <div class="plist-items" id="plist-items">${renderPList()}</div>
+    </aside>
+    <section class="pdetail">${p ? renderPatient(p) : `<div class="empty">Selecciona un paciente para ver su ficha e historial.</div>`}</section>
+  </div>`;
+}
+function renderPatient(p) {
+  const a = age(p.nacimiento);
+  const sessions = S.data.sessions.filter(s => s.patientId === p.id).sort((x, y) => y.date.localeCompare(x.date) || (y.createdAt || "").localeCompare(x.createdAt || ""));
+  const appts = S.data.appointments.filter(x => x.patientId === p.id).sort((x, y) => y.start.localeCompare(x.start));
+  const nowK = `${dKey(new Date())}T${tKey(new Date())}`;
+  const upcoming = appts.filter(x => x.start >= nowK).reverse(), past = appts.filter(x => x.start < nowK);
+  const noshow = past.filter(x => x.status === "noasistio").length;
+  const card = (t, v) => v ? `<div class="card"><h4>${t}</h4><p>${esc(v)}</p></div>` : "";
+  const apptRow = x => `<tr><td>${fmt(parseLocal(x.start), { weekday: "short", day: "numeric", month: "short", year: "numeric" })} · ${x.start.slice(11)}</td><td><span class="dot" style="background:${typeOf(x.type).color};display:inline-block;margin:0 6px 0 0"></span>${esc(typeOf(x.type).name)}</td><td><span class="badge ${x.status}">${STATUS[x.status]}</span></td><td style="text-align:right"><button class="btn small" data-action="edit-appt" data-id="${x.id}">Abrir</button></td></tr>`;
+  return `
+    <button class="btn small only-mobile" data-action="back-list" style="margin-bottom:12px">‹ Pacientes</button>
+    <div class="pd-head">
+      <div>
+        <h2>${esc(fullName(p))}</h2>
+        <div class="pd-meta">
+          ${a != null ? `<span>${a} años</span>` : ""}
+          ${p.telefono ? `<a href="tel:${esc(p.telefono.replace(/\s/g, ""))}">📞 ${esc(p.telefono)}</a>` : ""}
+          ${p.email ? `<a href="mailto:${esc(p.email)}">✉ ${esc(p.email)}</a>` : ""}
+          ${p.dni ? `<span>DNI ${esc(p.dni)}</span>` : ""}
+          <span>${sessions.length} ${sessions.length === 1 ? "sesión" : "sesiones"} en historial${noshow ? ` · ${noshow} no asistió` : ""}</span>
+          ${p.consentimiento ? `<span style="color:var(--ok)">✔ Consentimiento RGPD${p.consentimientoFecha ? " " + fmtDate(parseLocal(p.consentimientoFecha)) : ""}</span>` : `<span style="color:var(--warn)">⚠ Falta consentimiento RGPD</span>`}
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn primary" data-action="new-session" data-id="${p.id}">📝 Nueva sesión</button>
+        <button class="btn" data-action="new-appt" data-patient="${p.id}">📅 Nueva cita</button>
+        <button class="btn" data-action="edit-patient" data-id="${p.id}">Editar ficha</button>
+        <button class="btn" data-action="print-patient" data-id="${p.id}">🖨 Imprimir</button>
+      </div>
+    </div>
+    <div class="cards">
+      ${card("Diagnóstico / motivo de consulta", p.diagnostico)}
+      ${card("Antecedentes", p.antecedentes)}
+      ${card("Alergias / medicación", p.alergias)}
+      ${card("Profesión / actividad", p.profesion)}
+      ${card("Dirección", p.direccion)}
+      ${card("Notas", p.notas)}
+    </div>
+    <div class="sec-h"><h3>Próximas citas</h3></div>
+    ${upcoming.length ? `<table class="appts">${upcoming.map(apptRow).join("")}</table>` : `<p style="color:var(--muted)">No hay citas próximas.</p>`}
+    <div class="sec-h"><h3>Historial clínico</h3><span class="badge">${sessions.length}</span></div>
+    ${sessions.length ? `<div class="timeline">${sessions.map(s => `
+      <div class="entry">
+        <div class="entry-h"><strong>${fmt(parseLocal(s.date), { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</strong>${s.eva !== "" && s.eva != null ? `<span class="eva">Dolor EVA ${esc(s.eva)}/10</span>` : ""}<span class="spacer"></span><button class="btn small" data-action="edit-session" data-id="${s.id}">Editar</button></div>
+        <dl>
+          ${s.motivo ? `<dt>Motivo / subjetivo</dt><dd>${esc(s.motivo)}</dd>` : ""}
+          ${s.exploracion ? `<dt>Exploración</dt><dd>${esc(s.exploracion)}</dd>` : ""}
+          ${s.tratamiento ? `<dt>Tratamiento</dt><dd>${esc(s.tratamiento)}</dd>` : ""}
+          ${s.ejercicios ? `<dt>Ejercicios pautados</dt><dd>${esc(s.ejercicios)}</dd>` : ""}
+          ${s.evolucion ? `<dt>Evolución / plan</dt><dd>${esc(s.evolucion)}</dd>` : ""}
+        </dl>
+      </div>`).join("")}</div>` : `<p style="color:var(--muted)">Aún no hay sesiones registradas. Pulsa «Nueva sesión» tras atender al paciente.</p>`}
+    <div class="sec-h"><h3>Citas anteriores</h3></div>
+    ${past.length ? `<table class="appts">${past.map(apptRow).join("")}</table>` : `<p style="color:var(--muted)">Sin citas anteriores.</p>`}
+    <div style="margin:30px 0 10px"><button class="btn danger small" data-action="delete-patient" data-id="${p.id}">Eliminar paciente y todo su historial</button></div>`;
+}
+function openPatient(p) {
+  const isNew = !p, x = p || newPatient({});
+  openModal(`<h3>${isNew ? "Nuevo paciente" : "Editar ficha"}</h3>
+    <div class="row"><div><label>Nombre *</label><input name="nombre" required autofocus value="${esc(x.nombre)}"></div><div><label>Apellidos</label><input name="apellidos" value="${esc(x.apellidos)}"></div></div>
+    <div class="row"><div><label>Teléfono</label><input name="telefono" type="tel" value="${esc(x.telefono)}"></div><div><label>Email</label><input name="email" type="email" value="${esc(x.email)}"></div></div>
+    <div class="row"><div><label>Fecha de nacimiento</label><input name="nacimiento" type="date" value="${esc(x.nacimiento)}"></div><div><label>DNI / NIE</label><input name="dni" value="${esc(x.dni)}"></div></div>
+    <label>Dirección</label><input name="direccion" value="${esc(x.direccion)}">
+    <label>Profesión / actividad deportiva</label><input name="profesion" value="${esc(x.profesion)}">
+    <label>Diagnóstico / motivo de consulta</label><textarea name="diagnostico">${esc(x.diagnostico)}</textarea>
+    <label>Antecedentes (lesiones, cirugías, patologías)</label><textarea name="antecedentes">${esc(x.antecedentes)}</textarea>
+    <label>Alergias / medicación</label><textarea name="alergias">${esc(x.alergias)}</textarea>
+    <label>Notas</label><textarea name="notas">${esc(x.notas)}</textarea>
+    <label class="check"><input type="checkbox" name="consentimiento" ${x.consentimiento ? "checked" : ""}> Ha firmado el consentimiento de protección de datos (RGPD)</label>
+    <label>Fecha del consentimiento</label><input type="date" name="consentimientoFecha" value="${esc(x.consentimientoFecha)}">
+    <div class="mfoot"><button class="btn primary" value="save">Guardar</button><button class="btn" value="cancel" formnovalidate>Cancelar</button></div>`, fd => {
+    const fields = ["nombre", "apellidos", "telefono", "email", "nacimiento", "dni", "direccion", "profesion", "diagnostico", "antecedentes", "alergias", "notas", "consentimientoFecha"];
+    fields.forEach(f => x[f] = (fd[f] || "").trim());
+    x.consentimiento = !!fd.consentimiento;
+    if (isNew) S.data.patients.push(x);
+    ui.patientId = x.id; ui.tab = "crm";
+    commit();
+  });
+}
+function openSession(s) {
+  const isNew = !s.id;
+  openModal(`<h3>${isNew ? "Registrar sesión" : "Editar sesión"}</h3>
+    <div class="row">
+      <div><label>Paciente</label><select name="patientId" required>${[...S.data.patients].sort((a, b) => fullName(a).localeCompare(fullName(b), "es")).map(p => `<option value="${p.id}" ${p.id === s.patientId ? "selected" : ""}>${esc(fullName(p))}</option>`).join("")}</select></div>
+      <div><label>Fecha</label><input type="date" name="date" required value="${esc(s.date || dKey(new Date()))}"></div>
+    </div>
+    <label>Motivo / lo que cuenta el paciente (subjetivo)</label><textarea name="motivo" autofocus>${esc(s.motivo)}</textarea>
+    <label>Exploración / valoración (objetivo)</label><textarea name="exploracion">${esc(s.exploracion)}</textarea>
+    <label>Tratamiento aplicado</label><textarea name="tratamiento">${esc(s.tratamiento)}</textarea>
+    <label>Ejercicios pautados para casa</label><textarea name="ejercicios">${esc(s.ejercicios)}</textarea>
+    <label>Dolor (EVA 0–10)</label>
+    <div class="range-row"><input type="range" name="eva" min="0" max="10" step="1" value="${s.eva === "" || s.eva == null ? 0 : esc(s.eva)}" oninput="this.nextElementSibling.value=this.value;this.form.noEva.checked=false"><output>${s.eva === "" || s.eva == null ? 0 : esc(s.eva)}</output></div>
+    <label class="check"><input type="checkbox" name="noEva" ${s.eva === "" || isNew ? "checked" : ""}> No registrar dolor en esta sesión</label>
+    <label>Evolución / plan para la próxima sesión</label><textarea name="evolucion">${esc(s.evolucion)}</textarea>
+    <div class="mfoot">
+      <button class="btn primary" value="save">Guardar en historial</button>
+      <span class="spacer"></span>
+      ${!isNew ? `<button class="btn danger" value="delete" formnovalidate>Eliminar</button>` : ""}
+      <button class="btn" value="cancel" formnovalidate>Cancelar</button>
+    </div>`, (fd, action) => {
+    if (action === "delete") {
+      ask("¿Eliminar esta entrada del historial?").then(ok => { if (ok) { S.data.sessions = S.data.sessions.filter(x => x.id !== s.id); closeModal(); commit(); } });
+      return false;
+    }
+    const v = { patientId: fd.patientId, date: fd.date, motivo: fd.motivo.trim(), exploracion: fd.exploracion.trim(), tratamiento: fd.tratamiento.trim(), ejercicios: fd.ejercicios.trim(), evolucion: fd.evolucion.trim(), eva: fd.noEva ? "" : fd.eva };
+    if (isNew) {
+      S.data.sessions.push({ id: uid(), appointmentId: s.appointmentId || null, createdAt: new Date().toISOString(), ...v });
+      const ap = s.appointmentId && S.data.appointments.find(x => x.id === s.appointmentId);
+      if (ap && ap.status === "programada") ap.status = "realizada";
+    } else Object.assign(S.data.sessions.find(x => x.id === s.id), v);
+    ui.tab = "crm"; ui.patientId = fd.patientId;
+    commit();
+  });
+}
+function printPatient(p) {
+  const sessions = S.data.sessions.filter(s => s.patientId === p.id).sort((x, y) => x.date.localeCompare(y.date));
+  const f = (t, v) => v ? `<p><b>${t}:</b> ${esc(v).replace(/\n/g, "<br>")}</p>` : "";
+  $("#print-area").innerHTML = `<h1>Historia clínica de fisioterapia — ${esc(fullName(p))}</h1>
+    ${f("Fecha de nacimiento", p.nacimiento && fmtDate(parseLocal(p.nacimiento)))}${f("DNI", p.dni)}${f("Teléfono", p.telefono)}${f("Email", p.email)}${f("Dirección", p.direccion)}${f("Profesión", p.profesion)}
+    ${f("Diagnóstico / motivo", p.diagnostico)}${f("Antecedentes", p.antecedentes)}${f("Alergias / medicación", p.alergias)}${f("Notas", p.notas)}
+    <h2>Sesiones (${sessions.length})</h2>
+    ${sessions.map(s => `<div class="entry"><b>${fmtLong(parseLocal(s.date))}</b>${s.eva !== "" && s.eva != null ? ` — EVA ${esc(s.eva)}/10` : ""}${f("Subjetivo", s.motivo)}${f("Exploración", s.exploracion)}${f("Tratamiento", s.tratamiento)}${f("Ejercicios", s.ejercicios)}${f("Evolución", s.evolucion)}</div>`).join("")}
+    <p style="margin-top:24px;font-size:10px">Documento confidencial con datos de salud. Impreso el ${fmtLong(new Date())}.</p>`;
+  window.print();
+  setTimeout(() => $("#print-area").innerHTML = "", 500);
+}
+
+/* Ajustes */
+function openSettings() {
+  const st = S.data.settings;
+  openModal(`<h3>Ajustes y seguridad</h3>
+    <p style="margin:4px 0 0">${cloudOn ? "🔐 Tu agenda está cifrada con tu contraseña y se sincroniza entre tus dispositivos. El servidor solo guarda datos ilegibles." : "⚠ Tu agenda está cifrada y guardada solo en este dispositivo."}</p>
+    <div class="mfoot" style="margin-top:8px">
+      <button class="btn" type="button" data-m="backup">⬇ Descargar copia cifrada</button>
+      <button class="btn" type="button" data-m="restore">⬆ Restaurar una copia…</button>
+    </div>
+    <div class="row">
+      <div><label>Agenda desde</label><select name="dayStart">${[...Array(13)].map((_, h) => `<option ${st.dayStart === h + 5 ? "selected" : ""}>${h + 5}</option>`).join("")}</select></div>
+      <div><label>Hasta</label><select name="dayEnd">${[...Array(10)].map((_, h) => `<option ${st.dayEnd === h + 15 ? "selected" : ""}>${h + 15}</option>`).join("")}</select></div>
+      <div><label>Duración por defecto</label><select name="duration">${[30, 45, 60, 90].map(m => `<option value="${m}" ${st.duration === m ? "selected" : ""}>${m} min</option>`).join("")}</select></div>
+    </div>
+    <label>Bloqueo automático por inactividad</label>
+    <select name="autoLock">${[[5, "5 minutos"], [10, "10 minutos"], [15, "15 minutos"], [30, "30 minutos"], [60, "1 hora"], [0, "Nunca (no recomendado)"]].map(([v, l]) => `<option value="${v}" ${st.autoLock === v ? "selected" : ""}>${l}</option>`).join("")}</select>
+    <label>Tipos de cita (nombre y color)</label>
+    ${st.types.map(t => `<div class="row" style="margin-bottom:6px"><input name="tname_${t.id}" value="${esc(t.name)}"><input type="color" name="tcolor_${t.id}" value="${t.color}" style="flex:0 0 56px;padding:2px"></div>`).join("")}
+    <div class="mfoot"><button class="btn primary" value="save">Guardar ajustes</button><button class="btn" type="button" data-m="pw">Cambiar contraseña…</button><button class="btn" value="cancel" formnovalidate>Cerrar</button></div>`, (fd) => {
+    if (+fd.dayEnd <= +fd.dayStart) { notify("La hora de fin debe ser posterior a la de inicio."); return false; }
+    Object.assign(st, { dayStart: +fd.dayStart, dayEnd: +fd.dayEnd, duration: +fd.duration, autoLock: +fd.autoLock });
+    st.types.forEach(t => { t.name = fd["tname_" + t.id].trim() || t.name; t.color = fd["tcolor_" + t.id]; });
+    commit();
+  });
+  $("#modal [data-m=backup]").addEventListener("click", downloadBackup);
+  $("#modal [data-m=restore]").addEventListener("click", openRestore);
+  $("#modal [data-m=pw]").addEventListener("click", openChangePassword);
+}
+function openChangePassword() {
+  openModal(`<h3>Cambiar contraseña</h3>
+    <p>Después tendrás que entrar con la nueva en todos tus dispositivos.</p>
+    <label>Nueva contraseña (mín. 8 caracteres)</label><input type="password" name="pw1" autocomplete="new-password" required minlength="8" autofocus>
+    <label>Repite la nueva contraseña</label><input type="password" name="pw2" autocomplete="new-password" required>
+    <div class="mfoot"><button class="btn primary" value="save">Cambiar</button><button class="btn" value="cancel" formnovalidate>Cancelar</button></div>`, fd => {
+    if (fd.pw1 !== fd.pw2) { notify("Las contraseñas no coinciden."); return false; }
+    changePassword(fd.pw1).then(() => notify("Contraseña cambiada. Úsala a partir de ahora en el móvil y en el ordenador."), e => notify(e.message));
+  });
+}
+async function changePassword(pw) {
+  await flush();
+  const old = S.keys, keys = await deriveAll(pw), snap = clone(S.data);
+  if (keys.id === old.id) throw new Error("Es la misma contraseña que ya tienes.");
+  let version = 0;
+  if (cloudOn) {
+    try {
+      if (await cloud.get(keys.id)) throw new Error("Esa contraseña ya se usa en otra agenda. Elige otra.");
+      version = await cloud.put(keys, await seal(snap, keys), 0);
+      await cloud.del(old);
+    } catch (e) { if (e.code === "offline") throw new Error("Necesitas conexión a internet para cambiar la contraseña."); throw e; }
+  }
+  await idb.del("vault:" + old.id).catch(() => { });
+  Object.assign(S, { keys, base: snap, version });
+  await saveLocal(S);
+  setStatus();
+}
+function openRestore() {
+  openModal(`<h3>Restaurar una copia</h3>
+    <p>Elige un archivo <b>.fisio</b> descargado antes. Su contenido <b>sustituirá</b> a la agenda actual en todos tus dispositivos.</p>
+    <label>Archivo de copia</label><input type="file" name="file" accept=".fisio,application/octet-stream" required>
+    <label>Contraseña con la que se hizo esa copia</label><input type="password" name="pw" autocomplete="off" required>
+    <div class="mfoot"><button class="btn primary" value="save">Restaurar</button><button class="btn" value="cancel" formnovalidate>Cancelar</button></div>`, fd => {
+    (async () => {
+      const f = parseVault(await fd.file.text());
+      const data = f.v === 1 ? await openV1(f, fd.pw) : await openVault(f, await deriveAll(fd.pw));
+      if (!await ask(`La copia tiene ${data.patients.length} pacientes y ${data.appointments.length} citas. ¿Sustituir la agenda actual?`, "Restaurar")) return;
+      S.data = { ...data, updatedAt: new Date().toISOString() };
+      commit();
+      notify("Copia restaurada.");
+    })().catch(e => notify(e.message));
+  });
+}
+
+/* ---------- Eventos ---------- */
+document.addEventListener("click", e => {
+  const el = e.target.closest("[data-action]");
+  if (!el || !S) return;
+  const act = el.dataset.action, st = S.data.settings;
+  switch (act) {
+    case "tab": ui.tab = el.dataset.tab; render(); break;
+    case "lock": lockNow(); break;
+    case "settings": openSettings(); break;
+    case "status": if (S.syncError) flush(); else openSettings(); break;
+    case "view": ui.view = el.dataset.view; render(); break;
+    case "today": ui.cursor = new Date(); ui.mini = null; render(); break;
+    case "prev": case "next": {
+      const k = act === "prev" ? -1 : 1, c = ui.cursor;
+      ui.cursor = ui.view === "month" ? new Date(c.getFullYear(), c.getMonth() + k, 1) : addDays(c, k * (ui.view === "week" ? 7 : 1));
+      ui.mini = null; render(); break;
+    }
+    case "mini-prev": case "mini-next": { const c = ui.mini || ui.cursor; ui.mini = new Date(c.getFullYear(), c.getMonth() + (act === "mini-prev" ? -1 : 1), 1); render(); break; }
+    case "mini-day": ui.cursor = parseLocal(el.dataset.date); if (ui.view === "month") ui.view = "week"; render(); break;
+    case "goto-day": ui.cursor = parseLocal(el.dataset.date); ui.view = "day"; ui.mini = null; render(); break;
+    case "month-cell": openAppt({ start: `${el.dataset.date}T${pad(Math.max(st.dayStart, 9))}:00` }); break;
+    case "slot": {
+      const r = el.getBoundingClientRect(), H = r.height / (st.dayEnd - st.dayStart);
+      let m = st.dayStart * 60 + Math.floor((e.clientY - r.top) / H * 60 / 15) * 15;
+      m = Math.min(m, st.dayEnd * 60 - 15);
+      openAppt({ start: `${el.dataset.date}T${pad(Math.floor(m / 60))}:${pad(m % 60)}` });
+      break;
+    }
+    case "new-appt": {
+      const now = new Date(), base = sameDay(ui.cursor, now) || ui.tab === "crm" ? now : ui.cursor;
+      const h = sameDay(base, now) ? Math.min(Math.max(now.getHours() + 1, st.dayStart), st.dayEnd - 1) : Math.max(st.dayStart, 9);
+      openAppt({ start: `${dKey(base)}T${pad(h)}:00`, patientId: el.dataset.patient || null });
+      break;
+    }
+    case "edit-appt": e.stopPropagation(); openAppt(S.data.appointments.find(a => a.id === el.dataset.id)); break;
+    case "new-patient": openPatient(null); break;
+    case "pick-patient": ui.patientId = el.dataset.id; render(); break;
+    case "back-list": ui.patientId = null; render(); break;
+    case "edit-patient": openPatient(patient(el.dataset.id)); break;
+    case "new-session": openSession({ patientId: el.dataset.id }); break;
+    case "edit-session": openSession(S.data.sessions.find(s => s.id === el.dataset.id)); break;
+    case "print-patient": printPatient(patient(el.dataset.id)); break;
+    case "delete-patient": {
+      const p = patient(el.dataset.id);
+      ask(`¿Eliminar a ${fullName(p)} con todo su historial y sus citas? Esta acción no se puede deshacer.`).then(ok => { if (!ok || !S) return;
+      S.data.patients = S.data.patients.filter(x => x.id !== p.id);
+      S.data.sessions = S.data.sessions.filter(x => x.patientId !== p.id);
+      S.data.appointments = S.data.appointments.filter(x => x.patientId !== p.id);
+      ui.patientId = null; commit(); }); break;
+    }
+  }
+});
+document.addEventListener("input", e => {
+  if (e.target.id === "psearch") { ui.search = e.target.value; $("#plist-items").innerHTML = renderPList(); }
+});
+// Refresca la línea de "ahora" cada minuto.
+setInterval(() => { if (S && ui.tab === "cal" && !modal.open) render(); }, 60000);
+
+showLock();
+</script>
