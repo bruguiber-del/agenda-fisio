@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Agenda Fisio">
 <!-- La página solo puede conectarse a su servidor de sincronización, y solo le envía datos cifrados. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; connect-src 'none'; form-action 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; connect-src https://anbuapmtzupmetnxmzqz.supabase.co; form-action 'none'; base-uri 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="robots" content="noindex, nofollow">
 </head>
@@ -235,7 +235,7 @@ dialog h3 { margin: 0 0 6px; font-size: 18px; }
 "use strict";
 
 /* ---------- Servidor de sincronización (Supabase). Solo recibe datos cifrados. ---------- */
-const CLOUD = { url: "__SUPABASE_URL__", key: "__SUPABASE_ANON_KEY__" };
+const CLOUD = { url: "https://anbuapmtzupmetnxmzqz.supabase.co", key: "sb_publishable_-09Yr9aktTNh_Ej-5Jb0Gg_ugFsY0cx" };
 const cloudOn = /^https?:\/\//.test(CLOUD.url) && !CLOUD.key.startsWith("__");
 addEventListener("error", e => { const m = document.getElementById("boot-msg"); if (m) m.textContent = "Error al cargar: " + (e.message || "desconocido"); });
 
