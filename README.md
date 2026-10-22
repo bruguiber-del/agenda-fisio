@@ -22,7 +22,7 @@ el móvil y en el ordenador.
 
 ### 1. Base de datos (Supabase, gratis)
 1. Crea un proyecto en https://supabase.com. Elige la región de Europa.
-2. Ve a **SQL Editor**, pega el contenido de [`supabase/schema.sql`](supabase/schema.sql) y pulsa **Run**.
+2. Ve a **SQL Editor**, pega el contenido de [`supabase/migrations/20261022000000_agenda_cifrada.sql`](supabase/migrations/20261022000000_agenda_cifrada.sql) y pulsa **Run**.
 3. En **Project Settings → API** (o **Data API**), copia la **Project URL** y la clave pública
    **anon / publishable**. No uses nunca la clave `service_role` ni la `secret`.
 4. Crea `web/config.json`:
@@ -60,7 +60,7 @@ En un minuto la agenda queda en `https://USUARIO.github.io/agenda-fisio/`.
 | `index.html` | La app ya generada, que es lo que se publica |
 | `web/app.html` | El código fuente de la app |
 | `web/build.py` | Genera `index.html` con los datos del servidor |
-| `supabase/schema.sql` | La base de datos, que solo guarda agendas cifradas |
+| `supabase/migrations/` | La base de datos, que solo guarda agendas cifradas |
 
 ## Nota legal (RGPD)
 
